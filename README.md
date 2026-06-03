@@ -2,84 +2,98 @@
 
 [中文](./README_zh.md) | **English**
 
-A lightweight document-to-PDF converter powered by LibreOffice headless. Converts `.docx`, `.pptx`, and `.md` files to PDF with a single command.
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![OpenClaw Skill](https://img.shields.io/badge/OpenClaw-Skill-green?style=flat-square)](https://docs.openclaw.ai/skills/)
 
-## Features
+Convert `.docx`, `.pptx`, `.md` files to PDF — one command, same directory, same filename.
 
-- **docx → PDF** — Full formatting preserved (tables, images, styles)
-- **pptx → PDF** — One PDF page per slide, layout intact
-- **md → PDF** — GitHub-flavored styling with code highlighting and tables
-- **Zero config** — Same directory, same filename, `.pdf` extension
-- **Batch friendly** — Easily scriptable for bulk conversion
+Powered by [LibreOffice](https://www.libreoffice.org/) headless for high-fidelity rendering. Markdown files use GitHub-flavored styling.
 
-## Requirements
-
-| Dependency | Purpose | Install |
-|------------|---------|---------|
-| Python 3.10+ | Runtime | — |
-| LibreOffice | Rendering engine | `brew install --cask libreoffice` |
-| markdown | Markdown parsing | `pip install markdown` |
-
-## Quick Start
+## Install
 
 ```bash
-# Single file
-python scripts/convert.py report.docx
+# Clone into your OpenClaw skills directory
+git clone https://github.com/Eric-Zhou-0302/2pdf ~/.openclaw/skills/2pdf
 
-# Custom output path
-python scripts/convert.py slides.pptx output/slides.pdf
+# Install the only Python dependency (for .md conversion)
+pip install markdown
+```
 
-# Batch convert a directory
+**Prerequisite:** [LibreOffice](https://www.libreoffice.org/) must be installed.
+
+```bash
+brew install --cask libreoffice          # macOS
+sudo apt install libreoffice-core        # Ubuntu/Debian
+```
+
+## Usage
+
+```bash
+python ~/.openclaw/skills/2pdf/scripts/convert.py <file>
+```
+
+| Input | Output | Engine |
+|-------|--------|--------|
+| `report.docx` | `report.pdf` | LibreOffice |
+| `slides.pptx` | `slides.pdf` | LibreOffice |
+| `notes.md` | `notes.pdf` | markdown → HTML → LibreOffice |
+
+### Custom output path
+
+```bash
+python ~/.openclaw/skills/2pdf/scripts/convert.py input.docx /tmp/output.pdf
+```
+
+### Batch convert
+
+```bash
 for f in /path/to/*.docx /path/to/*.pptx /path/to/*.md; do
-  python scripts/convert.py "$f"
+  python ~/.openclaw/skills/2pdf/scripts/convert.py "$f"
 done
 ```
 
-## How It Works
-
-```
-docx ──→ LibreOffice headless ──→ PDF
-pptx ──→ LibreOffice headless ──→ PDF
-md   ──→ markdown → HTML (+ GitHub CSS) → LibreOffice ──→ PDF
-```
-
-All three formats go through LibreOffice's rendering engine, ensuring high-fidelity output. For Markdown files, the content is first converted to HTML with GitHub-flavored styling (tables, code blocks, blockquotes, etc.), then rendered to PDF.
-
-## Programmatic Use
+### Python API
 
 ```python
 from scripts.convert import convert
 
-# Default: same directory, same name, .pdf extension
-result = convert("/path/to/file.md")
-# → "/path/to/file.pdf"
-
-# Custom output path
-result = convert("/path/to/file.docx", "/tmp/output.pdf")
+convert("/path/to/file.md")                    # → /path/to/file.pdf
+convert("/path/to/file.docx", "/tmp/out.pdf")  # custom output
 ```
 
-## Project Structure
+## How it works
+
+```
+docx ──→ soffice --headless --convert-to pdf ──→ PDF
+pptx ──→ soffice --headless --convert-to pdf ──→ PDF
+md   ──→ markdown → HTML (+ CSS) → soffice    ──→ PDF
+```
+
+All three formats render through LibreOffice. For Markdown, content is first converted to HTML with embedded GitHub-style CSS (tables, code blocks, blockquotes, lists), then handed to LibreOffice for PDF rendering.
+
+## Project structure
 
 ```
 2pdf/
 ├── SKILL.md              # OpenClaw skill definition
-├── README.md             # English documentation
-├── README_zh.md          # 中文文档
+├── README.md             # English
+├── README_zh.md          # 中文
 ├── scripts/
-│   └── convert.py        # Core conversion script
+│   └── convert.py        # Conversion script
 └── assets/
-    └── github.css        # GitHub-flavored CSS for Markdown rendering
+    └── github.css        # GitHub-flavored CSS
 ```
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| `LibreOffice not found` | Install LibreOffice: `brew install --cask libreoffice` |
-| Chinese characters garbled | Ensure system fonts are available (STHeiti, PingFang) |
-| Conversion timeout | Kill stuck processes: `pkill soffice` |
-| Output PDF is empty | Check LibreOffice version: `soffice --version` |
+| Problem | Fix |
+|---------|-----|
+| `LibreOffice not found` | `brew install --cask libreoffice` |
+| Chinese chars garbled | System fonts required (STHeiti / PingFang) |
+| Conversion timeout | `pkill soffice` and retry |
+| Empty PDF output | `soffice --version` to verify installation |
 
 ## License
 
-MIT
+[MIT](LICENSE)
