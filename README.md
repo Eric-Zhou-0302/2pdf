@@ -2,87 +2,81 @@
 
 [中文](./README_zh.md) | **English**
 
+[![OpenClaw Skill](https://img.shields.io/badge/OpenClaw-Skill-green?style=flat-square)](https://docs.openclaw.ai/skills/)
+[![Claude Code Compatible](https://img.shields.io/badge/Claude%20Code-Compatible-orange?style=flat-square)](https://docs.anthropic.com/en/docs/claude-code)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![OpenClaw Skill](https://img.shields.io/badge/OpenClaw-Skill-green?style=flat-square)](https://docs.openclaw.ai/skills/)
 
-Convert `.docx`, `.pptx`, `.md` files to PDF — one command, same directory, same filename.
+An AI agent skill that converts `.docx`, `.pptx`, `.md` files to PDF. Works with OpenClaw, Claude Code, Codex, and any agent that supports the `SKILL.md` standard.
 
-Powered by [LibreOffice](https://www.libreoffice.org/) headless for high-fidelity rendering. Markdown files use GitHub-flavored styling.
+Just tell your agent: *"Convert this file to PDF"* — it handles the rest.
 
 ## Install
 
+### OpenClaw
+
 ```bash
-# Clone into your OpenClaw skills directory
 git clone https://github.com/Eric-Zhou-0302/2pdf ~/.openclaw/skills/2pdf
-
-# Install the only Python dependency (for .md conversion)
-pip install markdown
 ```
 
-**Prerequisite:** [LibreOffice](https://www.libreoffice.org/) must be installed.
+### Claude Code
 
 ```bash
-brew install --cask libreoffice          # macOS
-sudo apt install libreoffice-core        # Ubuntu/Debian
+git clone https://github.com/Eric-Zhou-0302/2pdf ~/.claude/skills/2pdf
 ```
 
-## Usage
+### Manual
 
-```bash
-python ~/.openclaw/skills/2pdf/scripts/convert.py <file>
-```
+Clone this repo into any `skills/` directory your agent reads from.
 
-| Input | Output | Engine |
-|-------|--------|--------|
-| `report.docx` | `report.pdf` | LibreOffice |
-| `slides.pptx` | `slides.pdf` | LibreOffice |
-| `notes.md` | `notes.pdf` | markdown → HTML → LibreOffice |
+### Prerequisites
 
-### Custom output path
+- **Python 3.10+**
+- **LibreOffice** — `brew install --cask libreoffice` (macOS) / `sudo apt install libreoffice-core` (Linux)
+- **markdown** — `pip install markdown` (for .md files only)
 
-```bash
-python ~/.openclaw/skills/2pdf/scripts/convert.py input.docx /tmp/output.pdf
-```
+## How to use
 
-### Batch convert
+Once installed, just talk to your agent naturally:
 
-```bash
-for f in /path/to/*.docx /path/to/*.pptx /path/to/*.md; do
-  python ~/.openclaw/skills/2pdf/scripts/convert.py "$f"
-done
-```
+> *"Convert the lecture slides to PDF"*
+> *"Turn my notes.md into a PDF"*
+> *"Export all .docx files in this folder to PDF"*
 
-### Python API
+The agent reads the skill, picks the right conversion path, and outputs PDFs beside the original files — same name, `.pdf` extension.
 
-```python
-from scripts.convert import convert
+## What it does
 
-convert("/path/to/file.md")                    # → /path/to/file.pdf
-convert("/path/to/file.docx", "/tmp/out.pdf")  # custom output
-```
+| Format | Method | Output |
+|--------|--------|--------|
+| `.docx` | LibreOffice headless | Exact formatting preserved |
+| `.pptx` | LibreOffice headless | One page per slide |
+| `.md` | markdown → HTML → LibreOffice | GitHub-flavored styling |
+
+All rendering goes through LibreOffice. Markdown files get converted to HTML with embedded GitHub-style CSS (tables, code blocks, blockquotes) before PDF rendering.
 
 ## How it works
 
-```
-docx ──→ soffice --headless --convert-to pdf ──→ PDF
-pptx ──→ soffice --headless --convert-to pdf ──→ PDF
-md   ──→ markdown → HTML (+ CSS) → soffice    ──→ PDF
-```
+The skill contains a single Python script (`scripts/convert.py`) that:
 
-All three formats render through LibreOffice. For Markdown, content is first converted to HTML with embedded GitHub-style CSS (tables, code blocks, blockquotes, lists), then handed to LibreOffice for PDF rendering.
+1. Detects file format from extension
+2. For `.docx` / `.pptx`: calls `soffice --headless --convert-to pdf`
+3. For `.md`: converts to HTML via the `markdown` library, embeds GitHub CSS, then passes to LibreOffice
+4. Outputs the PDF to the same directory with the same filename
+
+Your agent reads `SKILL.md` to know when and how to invoke this.
 
 ## Project structure
 
 ```
 2pdf/
-├── SKILL.md              # OpenClaw skill definition
+├── SKILL.md              # Skill definition (what the agent reads)
 ├── README.md             # English
 ├── README_zh.md          # 中文
 ├── scripts/
 │   └── convert.py        # Conversion script
 └── assets/
-    └── github.css        # GitHub-flavored CSS
+    └── github.css        # GitHub-flavored CSS for Markdown
 ```
 
 ## Troubleshooting
@@ -92,7 +86,6 @@ All three formats render through LibreOffice. For Markdown, content is first con
 | `LibreOffice not found` | `brew install --cask libreoffice` |
 | Chinese chars garbled | System fonts required (STHeiti / PingFang) |
 | Conversion timeout | `pkill soffice` and retry |
-| Empty PDF output | `soffice --version` to verify installation |
 
 ## License
 
