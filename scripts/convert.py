@@ -73,13 +73,28 @@ def _find_soffice() -> str:
     soffice = shutil.which("soffice")
     if soffice:
         return soffice
-    # Common macOS location
-    mac_path = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
-    if os.path.isfile(mac_path):
-        return mac_path
+    # Platform-specific fallback paths
+    candidates = []
+    if sys.platform == "darwin":
+        candidates.append("/Applications/LibreOffice.app/Contents/MacOS/soffice")
+    elif sys.platform == "win32":
+        candidates.extend([
+            os.path.join(os.environ.get("ProgramFiles", ""), "LibreOffice", "program", "soffice.exe"),
+            os.path.join(os.environ.get("ProgramFiles(x86)", ""), "LibreOffice", "program", "soffice.exe"),
+        ])
+    else:  # Linux
+        candidates.extend([
+            "/usr/bin/soffice",
+            "/usr/local/bin/soffice",
+        ])
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
     raise FileNotFoundError(
         "LibreOffice not found. Install it:\n"
-        "  brew install --cask libreoffice"
+        "  macOS:   brew install --cask libreoffice\n"
+        "  Linux:   sudo apt install libreoffice-core\n"
+        "  Windows: https://www.libreoffice.org/download/"
     )
 
 
