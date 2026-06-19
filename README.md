@@ -32,8 +32,10 @@ Clone this repo into any `skills/` directory your agent reads from.
 ### Prerequisites
 
 - **Python 3.10+**
-- **LibreOffice** — `brew install --cask libreoffice` (macOS) / `sudo apt install libreoffice-core` (Linux)
-- **markdown** — `pip install markdown` (for .md files only)
+- **Microsoft Word** (macOS / Windows) — required for `.docx` conversion via `docx2pdf`. On Linux, `docx2pdf` does not support `.docx`.
+- **LibreOffice** — `brew install --cask libreoffice` (macOS) / `sudo apt install libreoffice-core` (Linux). Required for `.pptx` and `.md`.
+- **docx2pdf** — `pip install docx2pdf` (for `.docx` conversion)
+- **markdown** — `pip install markdown` (for `.md` conversion only)
 
 ## How to use
 
@@ -49,20 +51,21 @@ The agent reads the skill, picks the right conversion path, and outputs PDFs bes
 
 | Format | Method | Output |
 |--------|--------|--------|
-| `.docx` | LibreOffice headless | Exact formatting preserved |
+| `.docx` | `docx2pdf` (Microsoft Word) | Highest fidelity; exact Word rendering |
 | `.pptx` | LibreOffice headless | One page per slide |
 | `.md` | markdown → HTML → LibreOffice | GitHub-flavored styling |
 
-All rendering goes through LibreOffice. Markdown files get converted to HTML with embedded GitHub-style CSS (tables, code blocks, blockquotes) before PDF rendering.
+`.docx` files are rendered through Microsoft Word via the `docx2pdf` Python package for the best possible visual fidelity. `.pptx` and `.md` files are rendered through LibreOffice headless. Markdown files get converted to HTML with embedded GitHub-style CSS (tables, code blocks, blockquotes) before PDF rendering.
 
 ## How it works
 
 The skill contains a single Python script (`scripts/convert.py`) that:
 
 1. Detects file format from extension
-2. For `.docx` / `.pptx`: calls `soffice --headless --convert-to pdf`
-3. For `.md`: converts to HTML via the `markdown` library, embeds GitHub CSS, then passes to LibreOffice
-4. Outputs the PDF to the same directory with the same filename
+2. For `.docx`: calls the `docx2pdf` package (drives Microsoft Word directly)
+3. For `.pptx`: calls `soffice --headless --convert-to pdf`
+4. For `.md`: converts to HTML via the `markdown` library, embeds GitHub CSS, then passes to LibreOffice
+5. Outputs the PDF to the same directory with the same filename
 
 Your agent reads `SKILL.md` to know when and how to invoke this.
 
@@ -83,9 +86,11 @@ Your agent reads `SKILL.md` to know when and how to invoke this.
 
 | Problem | Fix |
 |---------|-----|
-| `LibreOffice not found` | `brew install --cask libreoffice` |
-| Chinese chars garbled | System fonts required (STHeiti / PingFang) |
-| Conversion timeout | `pkill soffice` and retry |
+| `.docx` conversion fails with Word-related error | Ensure Microsoft Word is installed and licensed on macOS/Windows. `docx2pdf` does not support Linux + Word. |
+| `docx2pdf is not installed` | `pip install docx2pdf` |
+| `LibreOffice not found` (when converting `.pptx` / `.md`) | `brew install --cask libreoffice` (macOS) / `sudo apt install libreoffice-core` (Linux) |
+| Chinese chars garbled in `.md` PDF | System fonts required (STHeiti / PingFang on macOS) |
+| Conversion timeout (LibreOffice) | `pkill soffice` and retry |
 
 ## License
 

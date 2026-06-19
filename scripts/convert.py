@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
-2pdf — Convert docx/pptx/md to PDF via LibreOffice headless.
+2pdf — Convert docx/pptx/md to PDF.
+
+Engines:
+  .docx  -> docx2pdf (Microsoft Word; macOS/Windows only)
+  .pptx  -> LibreOffice headless
+  .md    -> markdown -> HTML -> LibreOffice headless
 
 Usage:
     python convert.py <input_file> [output_file]
@@ -99,8 +104,31 @@ def _find_soffice() -> str:
 
 
 # ── Conversion functions ────────────────────────────────────────────
+def _convert_via_docx2pdf(input_path: str, output_path: str) -> str:
+    """Convert .docx to PDF via the docx2pdf Python package.
+
+    docx2pdf drives Microsoft Word directly, so the rendered output is
+    visually identical to what Word itself would produce.  This is the
+    sole docx conversion path — Microsoft Word must be installed on
+    macOS or Windows (docx2pdf does not support Linux + Word).
+    """
+    try:
+        from docx2pdf import convert as _docx2pdf_convert
+    except ImportError as exc:
+        raise RuntimeError(
+            "docx2pdf is not installed.  Install it with:\n"
+            "  pip install docx2pdf"
+        ) from exc
+    _docx2pdf_convert(input_path, output_path)
+    if not os.path.isfile(output_path):
+        raise RuntimeError(
+            f"docx2pdf succeeded but output not found at {output_path}"
+        )
+    return output_path
+
+
 def _convert_office(input_path: str, output_dir: str, soffice: str) -> str:
-    """Convert docx/pptx to PDF via LibreOffice headless."""
+    """Convert pptx to PDF via LibreOffice headless."""
     cmd = [
         soffice,
         "--headless",
@@ -222,11 +250,16 @@ def convert(input_path: str, output_path: str | None = None) -> str:
     output_path = os.path.abspath(output_path)
     output_dir = os.path.dirname(output_path)
 
-    soffice = _find_soffice()
-
-    if ext in (".docx", ".pptx"):
+    if ext == ".docx":
+        # .docx is converted via the docx2pdf Python package, which
+        # drives Microsoft Word directly for the highest possible fidelity.
+        # Requires Microsoft Word installed (macOS or Windows).
+        result = _convert_via_docx2pdf(input_path, output_path)
+    elif ext == ".pptx":
+        soffice = _find_soffice()
         result = _convert_office(input_path, output_dir, soffice)
     elif ext == ".md":
+        soffice = _find_soffice()
         result = _convert_md(input_path, output_path, soffice)
     else:
         raise ValueError(f"No handler for {ext}")
@@ -236,7 +269,10 @@ def convert(input_path: str, output_path: str | None = None) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Convert docx/pptx/md to PDF via LibreOffice"
+        description=(
+            "Convert docx/pptx/md to PDF "
+            "(docx via docx2pdf/Word; pptx/md via LibreOffice headless)"
+        )
     )
     parser.add_argument("input", help="Input file (.docx, .pptx, .md)")
     parser.add_argument(

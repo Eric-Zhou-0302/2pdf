@@ -5,7 +5,7 @@ description: "Convert docx, pptx, md files to PDF. Triggers on 'convert to pdf',
 
 # 2pdf — Document to PDF Converter
 
-Convert `.docx`, `.pptx`, `.md` files to PDF using LibreOffice headless + Python.
+Convert `.docx`, `.pptx`, `.md` files to PDF using **docx2pdf** (Microsoft Word) for Word documents and **LibreOffice headless** for slides and Markdown.
 
 ## Quick Use
 
@@ -26,15 +26,27 @@ done
 
 | Input | Engine | Notes |
 |-------|--------|-------|
-| `.docx` | LibreOffice headless | Full formatting preserved |
+| `.docx` | **docx2pdf** (Microsoft Word) | Highest fidelity; requires Word installed on macOS / Windows |
 | `.pptx` | LibreOffice headless | Slides → one PDF page per slide |
 | `.md` | markdown → HTML → LibreOffice | GitHub-flavored styling |
 
 ## Requirements
 
+### `.docx` (docx2pdf)
+
+- **Microsoft Word** must be installed (macOS or Windows; docx2pdf does not support Linux + Word)
+- Python package: `docx2pdf`
+- Install:
+  ```bash
+  pip install docx2pdf
+  ```
+
+### `.pptx` and `.md` (LibreOffice)
+
 - **LibreOffice** must be installed (`soffice` in PATH or at `/Applications/LibreOffice.app`)
-- Python packages: `markdown` (for .md conversion)
-- Install: `pip install markdown`
+- Python package: `markdown` (only needed for `.md` conversion)
+- Install LibreOffice: `brew install --cask libreoffice`
+- Install markdown: `pip install markdown`
 
 ## Default Behavior
 
@@ -54,6 +66,8 @@ result = convert("/path/to/file.docx", "/tmp/out.pdf")  # custom output
 
 | Problem | Fix |
 |---------|-----|
-| `LibreOffice not found` | `brew install --cask libreoffice` |
-| Chinese chars garbled in .md PDF | Ensure system fonts available (STHeiti, PingFang) |
+| `.docx` fails with Word-related error | Ensure Microsoft Word is installed and licensed on macOS/Windows; on Linux, install a Word alternative — note that docx2pdf does not support Linux |
+| `docx2pdf is not installed` | `pip install docx2pdf` |
+| `LibreOffice not found` (when converting `.pptx` / `.md`) | `brew install --cask libreoffice` |
+| Chinese chars garbled in `.md` PDF | Ensure system fonts available (STHeiti, PingFang) |
 | Conversion timeout | Check for stuck soffice processes: `pkill soffice` |

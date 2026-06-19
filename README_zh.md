@@ -32,8 +32,10 @@ git clone https://github.com/Eric-Zhou-0302/2pdf ~/.claude/skills/2pdf
 ### 前置条件
 
 - **Python 3.10+**
-- **LibreOffice** — `brew install --cask libreoffice`（macOS）/ `sudo apt install libreoffice-core`（Linux）
-- **markdown** — `pip install markdown`（仅 .md 文件需要）
+- **Microsoft Word**（macOS / Windows）—— `.docx` 通过 `docx2pdf` 转换必须依赖 Word；Linux 下 `docx2pdf` 不支持 `.docx`。
+- **LibreOffice** — `brew install --cask libreoffice`（macOS）/ `sudo apt install libreoffice-core`（Linux）。`.pptx` 和 `.md` 需要。
+- **docx2pdf** — `pip install docx2pdf`（`.docx` 转换需要）
+- **markdown** — `pip install markdown`（仅 `.md` 转换需要）
 
 ## 使用方式
 
@@ -49,20 +51,21 @@ Agent 会读取 Skill，选择正确的转换路径，输出 PDF 到原文件同
 
 | 格式 | 方式 | 效果 |
 |------|------|------|
-| `.docx` | LibreOffice headless | 完整保留格式 |
+| `.docx` | `docx2pdf`（Microsoft Word） | 保真度最高，与 Word 渲染一致 |
 | `.pptx` | LibreOffice headless | 每页幻灯片对应一页 PDF |
 | `.md` | markdown → HTML → LibreOffice | GitHub 风格样式 |
 
-所有格式均通过 LibreOffice 渲染。Markdown 文件先转为 HTML 并嵌入 GitHub 风格 CSS（表格、代码块、引用块），再交给 LibreOffice 生成 PDF。
+`.docx` 文件通过 `docx2pdf` 调用 Microsoft Word 渲染，以获得最佳的视觉保真度。`.pptx` 和 `.md` 文件通过 LibreOffice headless 渲染。Markdown 文件先转为 HTML 并嵌入 GitHub 风格 CSS（表格、代码块、引用块），再交给 LibreOffice 生成 PDF。
 
 ## 工作原理
 
 Skill 包含一个 Python 脚本（`scripts/convert.py`）：
 
 1. 根据扩展名判断格式
-2. `.docx` / `.pptx`：调用 `soffice --headless --convert-to pdf`
-3. `.md`：通过 `markdown` 库转为 HTML，嵌入 GitHub CSS，再交给 LibreOffice
-4. 输出 PDF 到同目录、同文件名
+2. `.docx`：调用 `docx2pdf` 包（直接驱动 Microsoft Word）
+3. `.pptx`：调用 `soffice --headless --convert-to pdf`
+4. `.md`：通过 `markdown` 库转为 HTML，嵌入 GitHub CSS，再交给 LibreOffice
+5. 输出 PDF 到同目录、同文件名
 
 Agent 通过读取 `SKILL.md` 来了解何时以及如何调用此脚本。
 
@@ -83,9 +86,11 @@ Agent 通过读取 `SKILL.md` 来了解何时以及如何调用此脚本。
 
 | 问题 | 解决 |
 |------|------|
-| `LibreOffice not found` | `brew install --cask libreoffice` |
-| 中文字符乱码 | 需要系统字体（STHeiti / PingFang） |
-| 转换超时 | `pkill soffice` 后重试 |
+| `.docx` 转换报 Word 相关错误 | 确保 macOS/Windows 上已安装并授权 Microsoft Word。Linux 下 `docx2pdf` 不支持 Word |
+| `docx2pdf is not installed` | `pip install docx2pdf` |
+| `LibreOffice not found`（转换 `.pptx` / `.md` 时） | `brew install --cask libreoffice`（macOS）/ `sudo apt install libreoffice-core`（Linux） |
+| `.md` PDF 中文字符乱码 | 需要系统字体（macOS: STHeiti / PingFang） |
+| 转换超时（LibreOffice） | `pkill soffice` 后重试 |
 
 ## 许可证
 
