@@ -2,10 +2,10 @@
 
 [中文](./README_zh.md) | **English**
 
-[![OpenClaw Skill](https://img.shields.io/badge/OpenClaw-Skill-green?style=flat-square)](https://docs.openclaw.ai/skills/)
-[![Claude Code Compatible](https://img.shields.io/badge/Claude%20Code-Compatible-orange?style=flat-square)](https://docs.anthropic.com/en/docs/claude-code)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+
+> Compatible with any agent that supports the SKILL.md standard (e.g. OpenClaw, Claude Code, Codex).
 
 An AI agent skill that converts `.docx`, `.pptx`, `.md` files to PDF. Works with OpenClaw, Claude Code, Codex, and any agent that supports the `SKILL.md` standard.
 
